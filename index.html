@@ -3,93 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tijil Jha — software engineer</title>
-<meta name="description" content="Tijil Jha — software engineer in Bangalore. I build products end to end: web platforms, desktop apps, and a game written from scratch in C++.">
+<title>Tijil Jha</title>
+<meta name="description" content="Tijil Jha — software engineer in Bangalore. I build products end to end, and turn the making of them into things you can play and read.">
 <link rel="preconnect" href="https://rsms.me/">
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-<style>
-  :root{
-    --bg:#fcfcfa; --text:#1a1a18; --dim:#6b6b66; --faint:#9c9c96;
-    --line:#e8e8e4; --accent:#c25e1e; --card:#f5f5f2;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{ --bg:#101010; --text:#eaeae6; --dim:#9a9a94; --faint:#6e6e68;
-           --line:#242422; --accent:#e8834a; --card:#181816; }
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{
-    background:var(--bg); color:var(--text);
-    font-family:'Inter var',Inter,system-ui,-apple-system,sans-serif;
-    font-size:16px; line-height:1.75; -webkit-font-smoothing:antialiased;
-    font-feature-settings:'cv11','ss01';
-  }
-  .wrap{max-width:640px;margin:0 auto;padding:0 24px}
-  a{color:var(--text);text-decoration:underline;text-decoration-color:var(--faint);text-underline-offset:3px;transition:.15s}
-  a:hover{text-decoration-color:var(--accent);color:var(--accent)}
-
-  header{padding:56px 0 0}
-  header .row{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
-  header .name{font-weight:600;font-size:15px;letter-spacing:.2px}
-  nav{display:flex;gap:20px;font-size:14px;color:var(--dim)}
-  nav a{color:var(--dim);text-decoration:none}
-  nav a:hover{color:var(--accent)}
-
-  section{padding:44px 0 0}
-  h1{font-size:26px;font-weight:600;letter-spacing:-.3px;line-height:1.35;margin-bottom:18px}
-  h2{font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--faint);margin-bottom:26px}
-  p{color:var(--dim);margin-bottom:16px;max-width:60ch}
-  p strong,b{color:var(--text);font-weight:550}
-  .accent{color:var(--accent)}
-
-  /* projects */
-  .proj{list-style:none}
-  .proj li{display:grid;grid-template-columns:44px 1fr;gap:0 16px;padding:22px 0;border-top:1px solid var(--line)}
-  .proj li:last-child{border-bottom:1px solid var(--line)}
-  .proj .n{color:var(--faint);font-size:13px;font-variant-numeric:tabular-nums;padding-top:3px}
-  .proj h3{font-size:16px;font-weight:600;letter-spacing:-.1px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-  .proj h3 .meta{font-weight:400;font-size:13px;color:var(--faint)}
-  .proj p{font-size:14.5px;margin:6px 0 8px}
-  .proj .links{font-size:13.5px;display:flex;gap:16px}
-
-  /* featured game card */
-  .feature{
-    display:block;border:1px solid var(--line);border-radius:10px;background:var(--card);
-    padding:26px 28px;margin:6px 0 34px;text-decoration:none;transition:.15s;
-  }
-  .feature:hover{border-color:var(--accent);color:inherit}
-  .feature .tag{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:600}
-  .feature h3{font-size:19px;font-weight:600;margin:8px 0 6px;letter-spacing:-.2px}
-  .feature p{font-size:14.5px;margin-bottom:10px}
-  .feature .cta{font-size:14px;color:var(--accent);font-weight:550}
-
-  /* interests + now */
-  .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px 32px}
-  @media (max-width:560px){.cols{grid-template-columns:1fr}}
-  .cols div{font-size:14.5px;color:var(--dim);padding:10px 0;border-top:1px solid var(--line)}
-  .cols b{display:block;font-size:15px;margin-bottom:2px}
-
-  .now{list-style:none}
-  .now li{padding:14px 0;border-top:1px solid var(--line);font-size:14.5px;color:var(--dim)}
-  .now li:last-child{border-bottom:1px solid var(--line)}
-  .now b{color:var(--text)}
-  .now .st{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-left:8px}
-
-  footer{padding:56px 0 72px}
-  footer .links{display:flex;gap:22px;font-size:14.5px;flex-wrap:wrap}
-  footer .fine{color:var(--faint);font-size:13px;margin-top:28px}
-</style>
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 
-<header>
+<header class="site">
   <div class="wrap">
     <div class="row">
-      <div class="name">Tijil Jha</div>
-      <nav>
-        <a href="#projects">Projects</a>
-        <a href="#interests">Interests</a>
-        <a href="#now">Now</a>
+      <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
+      <nav class="main">
+        <a href="index.html" aria-current="page">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="lab.html">Lab</a>
         <a href="mailto:tijiljha8@gmail.com">Contact</a>
       </nav>
     </div>
@@ -98,123 +27,95 @@
 
 <section>
   <div class="wrap">
-    <h1>I'm a software engineer in Bangalore.<br>
-    I build products end to end — and&nbsp;occasionally, a game engine for&nbsp;fun.</h1>
-    <p>
-      By day I work on <strong>geospatial data platforms</strong> — React front-ends and Python
-      services on AWS that turn satellite data into things teams actually use. Outside of that
-      I ship my own products: desktop apps, automation pipelines, full web platforms, and a
-      game written from scratch in C++.
+    <h1>I'm Tijil Jha. I build software — and I make the building of it something you can <span class="light">play</span> and <span class="light">read</span>.</h1>
+    <p class="lead">
+      Most of what I make ends up as something you can open: a game you play in the browser,
+      a tool that drafts your emails, notebooks where I work through hard systems problems out loud.
     </p>
-    <p>
-      I don't box myself into one stack. I pick up whatever the problem needs, learn it fast,
-      and ship.
-    </p>
-  </div>
-</section>
 
-<section id="projects">
-  <div class="wrap">
-    <h2>Projects</h2>
-
-    <a class="feature" href="https://e33-parry-combat.vercel.app" target="_blank" rel="noopener">
-      <div class="tag">Featured · playable in your browser</div>
-      <h3>The Story of Dev — a game with no engine</h3>
-      <p>My story as a developer, told as a playable game. No Unity, no Unreal — rendering,
-      a frame-perfect parry combat system, flocking AI, and a story engine hand-written in
-      C++17 and compiled to WebAssembly.</p>
-      <div class="cta">Play it →</div>
-    </a>
-
-    <ul class="proj">
-      <li>
-        <span class="n">01</span>
-        <div>
-          <h3>OpenCluely <span class="meta">Electron · STT · LLMs</span></h3>
-          <p>A real-time meeting assistant that listens to whatever's on screen, transcribes it
-          live, and drops a clean summary with action items in your inbox — so you can be
-          present in the room instead of taking notes.</p>
-        </div>
-      </li>
-      <li>
-        <span class="n">02</span>
-        <div>
-          <h3>JobPilot <span class="meta">Python · embeddings · Gmail API</span></h3>
-          <p>Job-search automation with a human in the loop: scrapes roles, scores each one
-          against my résumé with semantic matching, and drafts the cold email. It never sends
-          on its own — judgment stays human, the grind gets automated.</p>
-          <div class="links"><a href="https://jobpilot-coral-nu.vercel.app" target="_blank" rel="noopener">Site →</a></div>
-        </div>
-      </li>
-      <li>
-        <span class="n">03</span>
-        <div>
-          <h3>WorkEthix <span class="meta">Next.js · Supabase · founding engineer</span></h3>
-          <p>An end-to-end hiring platform built from an empty repo as the first engineer —
-          a two-sided marketplace with employers and candidates onboarded and in real use.</p>
-          <div class="links"><a href="https://workethixrec.com/" target="_blank" rel="noopener">Live →</a> <a href="workethix.html">How it's built →</a></div>
-        </div>
-      </li>
-      <li>
-        <span class="n">04</span>
-        <div>
-          <h3>Geospatial data platform <span class="meta">React · Python · PostgreSQL · AWS</span></h3>
-          <p>Production GIS systems at scale: front-ends and services that make raw satellite
-          and boundary data queryable, visual, and reliable for daily use.</p>
-          <div class="links"><a href="gis.html">How it's built →</a></div>
-        </div>
-      </li>
-      <li>
-        <span class="n">05</span>
-        <div>
-          <h3>Game engine internals <span class="meta">C++17 · raylib · WASM</span></h3>
-          <p>The systems under the featured game: deterministic combat state machine, boids
-          flocking, dialog scripting, headless self-tests, emscripten build pipeline.</p>
-          <div class="links"><a href="tech.html">Read the source notes →</a></div>
-        </div>
-      </li>
-      <li>
-        <span class="n">06</span>
-        <div>
-          <h3>Smaller builds <span class="meta">earlier work</span></h3>
-          <p>A Shopify storefront extension shipped to a merchant's standards, and
-          <a href="https://crytofy.vercel.app/" target="_blank" rel="noopener">Cryptofy</a>,
-          a live crypto converter — where I first learned to wire third-party APIs into
-          something clean.</p>
-        </div>
-      </li>
-    </ul>
-  </div>
-</section>
-
-<section id="interests">
-  <div class="wrap">
-    <h2>What interests me</h2>
-    <div class="cols">
-      <div><b>Systems from scratch</b>Building the thing under the thing — engines, state machines, pipelines — instead of always reaching for a framework.</div>
-      <div><b>AI as a tool, not a toy</b>LLMs wired into real workflows: transcription, summarisation, matching. Products where the model disappears and the usefulness stays.</div>
-      <div><b>Human-in-the-loop automation</b>Automating the grind while keeping judgment human — the design principle behind JobPilot and OpenCluely.</div>
-      <div><b>Craft in small things</b>Frame-perfect parry windows, clean typography, fast cold starts. Details users feel before they can name them.</div>
+    <div class="nowcard">
+      <div class="item"><span class="k">where</span> <span><b>Bangalore, India</b></span></div>
+      <div class="item"><span class="k">now</span> <span><b>Software engineer</b></span></div>
     </div>
   </div>
 </section>
 
-<section id="now">
+<section>
   <div class="wrap">
-    <h2>Now — ideas I'm working on</h2>
-    <ul class="now">
-      <li><b>New acts for the game</b><span class="st">ongoing</span><br>Every time my real story moves forward, a new chapter ships in The Story of Dev.</li>
-      <li><b>Local-first meeting intelligence</b><span class="st">exploring</span><br>Pushing OpenCluely's transcription and summarisation on-device — private by default, no audio leaving the machine.</li>
-      <li><b>An agent that maintains itself</b><span class="st">sketching</span><br>Extending JobPilot from drafting emails to tracking replies and follow-ups — a pipeline that closes its own loop.</li>
-    </ul>
+    <h2 class="sec">Recently shipped</h2>
+
+    <a class="feature" href="https://e33-parry-combat.vercel.app" target="_blank" rel="noopener">
+      <div class="kick">Playable in your browser · new chapter shipped</div>
+      <h3>The Story of Dev — a playable portfolio</h3>
+      <p>My journey as a developer, told as a game you actually play in the browser. Built by
+      hand in C++17 and compiled to run on the web, it grows a new chapter every time my real
+      story moves forward. Latest chapter: <b>VI. The Rematch</b>.</p>
+      <div class="cta">Play it →</div>
+    </a>
+
+    <a class="feature" href="https://jobpilot-coral-nu.vercel.app" target="_blank" rel="noopener">
+      <div class="kick">Live · Python</div>
+      <h3>JobPilot — job-search automation, human in the loop</h3>
+      <p>Scrapes roles, scores each against my résumé with semantic matching, and drafts the
+      cold email. It never sends on its own — the grind is automated, the judgment stays mine.</p>
+      <div class="cta">See it →</div>
+    </a>
+
+    <a class="feature" href="https://github.com/Tijil8/ecs-benchmark" target="_blank" rel="noopener">
+      <div class="kick">C++17 · WebAssembly · open source</div>
+      <h3>Same work, 10× faster — a data-oriented ECS, measured</h3>
+      <p>A hand-rolled Entity Component System benchmarked against the naive OOP approach doing
+      identical, checksum-verified work. At one million entities the data-oriented version is
+      <b>10.4× faster</b> — purely from how the bytes sit in memory, not from any change to the
+      algorithm. Comes with a live 3D demo compiled to WebAssembly: press a key and watch the
+      memory layout swap under a running simulation.</p>
+      <div class="cta">Source &amp; demo →</div>
+    </a>
+
+    <p style="margin-top:6px"><a href="projects.html">Everything I've shipped →</a></p>
   </div>
 </section>
 
-<footer>
+<section>
   <div class="wrap">
-    <h2>Contact</h2>
-    <p>Open to product companies and game studios. The fastest way to see how I work is to
-    <a href="https://e33-parry-combat.vercel.app" target="_blank" rel="noopener">play the game</a>.</p>
+    <h2 class="sec">Currently in the Lab</h2>
+    <p>
+      Alongside shipping, I keep a notebook of harder problems I'm working through — the kind of
+      thing game and systems teams live in. Memory layout, allocation-free frames, cache-friendly
+      state machines, geospatial data at scale. Each one is a problem I understand, the way I'd
+      approach it, and the trade-offs that decide whether it works.
+    </p>
+    <ul class="rows">
+      <li>
+        <span class="n">→</span>
+        <div>
+          <h3><a href="lab-cache.html">Fitting the combat loop in cache</a> <span class="meta">data-oriented design</span> <span class="status">in&nbsp;progress</span></h3>
+          <p>Turning a pointer-chasing entity update into a linear, cache-friendly sweep.</p>
+        </div>
+      </li>
+      <li>
+        <span class="n">→</span>
+        <div>
+          <h3><a href="lab-alloc.html">A frame with zero allocations</a> <span class="meta">arena allocators</span> <span class="status">exploring</span></h3>
+          <p>Why a heap allocation in the game loop shows up as a stutter, and how to design it out.</p>
+        </div>
+      </li>
+      <li>
+        <span class="n">→</span>
+        <div>
+          <h3><a href="lab-raster.html">Processing a country's worth of raster</a> <span class="meta">geospatial pipelines</span> <span class="status">from&nbsp;the&nbsp;job</span></h3>
+          <p>Making terabytes of satellite imagery queryable without melting the machine.</p>
+        </div>
+      </li>
+    </ul>
+    <p style="margin-top:8px"><a href="lab.html">Read the Lab →</a></p>
+  </div>
+</section>
+
+<footer class="site" id="contact">
+  <div class="wrap">
+    <h2 class="sec">Say hi</h2>
+    <p>Got something to build, or just want to talk shop? I'm always up for a good conversation.</p>
     <div class="links">
       <a href="mailto:tijiljha8@gmail.com">Email</a>
       <a href="https://github.com/tijiljha" target="_blank" rel="noopener">GitHub</a>
