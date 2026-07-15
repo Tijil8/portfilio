@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Under the hood — the satellite-data platform</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#111621; --line:#1e2732;
+    --text:#c9d1d9; --dim:#8b949e; --faint:#586270;
+    --gold:#e3b341; --gold-soft:#f0c869; --blue:#58a6ff; --green:#3fb950;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.75;-webkit-font-smoothing:antialiased}
+  a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+  .wrap{max-width:820px;margin:0 auto;padding:0 24px}
+  .back{display:inline-block;color:var(--faint);font-size:13px;letter-spacing:1px;margin:34px 0 0}
+  .back:hover{color:var(--gold);text-decoration:none}
+  header.top{padding:20px 0 60px;border-bottom:1px solid var(--line)}
+  .eyebrow{color:var(--gold);font-size:12px;letter-spacing:4px;text-transform:uppercase;margin:40px 0 18px;display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--gold)}
+  h1{font-size:clamp(30px,6vw,52px);letter-spacing:1px;color:#f0f6fc;line-height:1.1;margin-bottom:18px}
+  h2{font-size:23px;color:#f0f6fc;letter-spacing:.5px;margin-bottom:14px}
+  .sub{color:var(--dim);font-size:16px;max-width:660px}
+  p{color:var(--dim);margin-bottom:14px}
+  .accent{color:var(--gold)}
+  .note{color:var(--faint);font-size:13px;border-left:2px solid var(--line);padding-left:14px;margin:18px 0}
+  section{padding:46px 0;border-bottom:1px solid var(--line)}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:30px 0 10px}
+  .metric{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;text-align:center}
+  .metric .n{color:var(--gold);font-size:20px;letter-spacing:1px}
+  .metric .l{color:var(--faint);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-top:6px}
+  code{background:#0f141d;border:1px solid var(--line);border-radius:5px;padding:2px 7px;color:var(--gold-soft);font-size:13px}
+  pre{background:#0f141d;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:18px 20px;overflow-x:auto;margin:16px 0;font-size:13px;line-height:1.6}
+  pre .c{color:var(--faint)}pre .k{color:#ff7b72}pre .s{color:var(--green)}pre .f{color:var(--blue)}
+  ul{list-style:none;margin:10px 0}
+  ul li{padding:6px 0 6px 22px;position:relative;color:var(--dim)}
+  ul li::before{content:"▸";position:absolute;left:0;color:var(--gold)}
+  .pipeline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0}
+  .pipeline .stage{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:9px 14px;font-size:13px;color:var(--text)}
+  .pipeline .arrow{color:var(--gold);font-size:16px}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 0}
+  .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:4px 12px;letter-spacing:.5px}
+  footer{padding:56px 0 80px;text-align:center}
+  .btn{display:inline-block;padding:11px 20px;border:1px solid var(--gold);border-radius:7px;color:var(--gold);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;transition:.15s}
+  .btn:hover{background:var(--gold);color:#0b0e14;text-decoration:none}
+  @media(max-width:620px){.metrics{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="back" href="index.html">← back to portfolio</a>
+    <div class="eyebrow">under the hood</div>
+    <h1>Turning satellites<br>into usable data.</h1>
+    <p class="sub">
+      Geospatial &amp; earth-observation data is huge, messy, and constantly arriving. My work
+      here was building the pipelines and interfaces that turn raw satellite imagery and
+      geospatial records into clean, queryable products teams use every day.
+    </p>
+    <div class="metrics">
+      <div class="metric"><div class="n">STAC</div><div class="l">imagery catalogs</div></div>
+      <div class="metric"><div class="n">Python</div><div class="l">data pipelines</div></div>
+      <div class="metric"><div class="n">PostGIS</div><div class="l">geospatial store</div></div>
+      <div class="metric"><div class="n">React</div><div class="l">map dashboards</div></div>
+    </div>
+    <p class="note">Details here are kept general — the shapes and patterns of the work, not any specific dataset or client.</p>
+  </div>
+</header>
+
+<!-- INGEST -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">stage 01 · ingest</div>
+    <h2>Cataloguing satellite imagery with STAC</h2>
+    <p>
+      Earth-observation imagery arrives as enormous scenes tagged with time, footprint and
+      band metadata. I worked with <span class="accent">STAC</span> (SpatioTemporal Asset Catalog)
+      to index those scenes so they can be searched by <em>area of interest</em> and
+      <em>time window</em> instead of by hand.
+    </p>
+    <pre><span class="c"># query a STAC catalog for scenes over a region + date range</span>
+items = catalog.<span class="f">search</span>(
+    intersects = region_geometry,   <span class="c"># area of interest</span>
+    datetime   = <span class="s">"2025-01-01/2025-06-30"</span>,
+    query      = { <span class="s">"eo:cloud_cover"</span>: {<span class="s">"lt"</span>: 20} },
+).item_collection()</pre>
+    <ul>
+      <li>Filtering scenes by footprint, date, and cloud cover before anything heavy runs</li>
+      <li>Validating catalog availability across many regions in batch</li>
+      <li>Turning region identifiers into geometries the pipeline can actually query on</li>
+    </ul>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">stage 02 · process</div>
+    <h2>Batch geospatial pipelines</h2>
+    <p>
+      Once the right scenes are found, they're processed region-by-region: reprojected,
+      clipped to boundaries, and reduced to the values that actually matter downstream —
+      run as repeatable batch jobs rather than one-off scripts.
+    </p>
+    <div class="pipeline">
+      <span class="stage">region list</span><span class="arrow">→</span>
+      <span class="stage">resolve geometries</span><span class="arrow">→</span>
+      <span class="stage">STAC search</span><span class="arrow">→</span>
+      <span class="stage">clip + reduce</span><span class="arrow">→</span>
+      <span class="stage">write to PostGIS</span>
+    </div>
+    <ul>
+      <li>Raster ↔ vector operations with the Python geospatial stack (rasterio, shapely, GeoPandas)</li>
+      <li>Idempotent batch runs over large region lists, resumable when they stop midway</li>
+      <li>Data-quality checks so bad or missing scenes never silently corrupt an output</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SERVE -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">stage 03 · serve</div>
+    <h2>APIs over a spatial database</h2>
+    <p>
+      Processed results land in <span class="accent">PostgreSQL / PostGIS</span>, exposed through
+      Python service APIs so front-ends can ask spatial questions — "what's inside this
+      boundary?", "what changed over time?" — without touching raw imagery.
+    </p>
+    <ul>
+      <li>Spatial indexes and PostGIS queries for fast area/point lookups</li>
+      <li>REST APIs returning GeoJSON that maps can render directly</li>
+      <li>Deployed and run on AWS</li>
+    </ul>
+  </div>
+</section>
+
+<!-- FRONTEND -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">stage 04 · visualise</div>
+    <h2>React dashboards on top of the data</h2>
+    <ul>
+      <li>Interactive map front-ends in React, rendering the geospatial layers the APIs serve</li>
+      <li>Filtering and drill-down by region and time so users explore, not just view</li>
+      <li>The last mile — making heavy geospatial data feel light and usable</li>
+    </ul>
+    <div class="tags">
+      <span class="tag">Python</span><span class="tag">STAC</span><span class="tag">rasterio</span><span class="tag">GeoPandas</span>
+      <span class="tag">shapely</span><span class="tag">PostGIS</span><span class="tag">PostgreSQL</span>
+      <span class="tag">REST / GeoJSON</span><span class="tag">React</span><span class="tag">AWS</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="btn" href="index.html">← back to portfolio</a>
+  </div>
+</footer>
+
+</body>
+</html>
