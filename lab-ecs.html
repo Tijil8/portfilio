@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proving the layout win: a data-oriented ECS — Tijil Jha</title>
+<meta name="description" content="I predicted that memory layout alone could make identical work 10× faster. Then I built both versions and measured it — 10.4× at a million entities, checksum-verified.">
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="row">
+      <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
+      <nav class="main">
+        <a href="index.html">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="lab.html" aria-current="page">Lab</a>
+        <a href="mailto:tijiljha8@gmail.com">Contact</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="crumb"><a href="index.html">~</a> / <a href="index.html">home</a> / <a href="lab.html">lab</a> / <span class="here">proving the layout win</span></div>
+<div class="doclayout">
+  <aside class="toc"><p class="toc-h">Table of Contents</p><nav id="toc"></nav></aside>
+  <main class="doc">
+    <a class="backlink" href="lab.html">← the Lab</a>
+    <h1>Proving the layout win: a data-oriented ECS</h1>
+    <div class="meta"><span class="status">shipped</span> <span>data-oriented design</span> <span>· 16 July 2026</span></div>
+
+    <p>
+      In an earlier note — <a href="lab-cache.html">fitting the combat loop in cache</a> — I made a
+      claim and then admitted I couldn't prove it on my own game, because the game is too small for
+      the difference to show. The claim was that <em>how you arrange data in memory can matter more
+      than the algorithm that runs over it</em>. This is the follow-up where I stop predicting and
+      measure. I built the real thing, ran it head to head against the naive version, and let the
+      numbers settle the argument. <a href="https://ecs-benchmark.vercel.app/" target="_blank" rel="noopener">There's a live demo</a>
+      you can drive in the browser, and <a href="https://github.com/Tijil8/ecs-benchmark" target="_blank" rel="noopener">the source is open</a>.
+    </p>
+
+    <h2>The question I wanted to answer</h2>
+    <p>
+      Take a workload and hold it completely fixed — same entities, same maths, same final result,
+      down to the last bit. Change nothing except <em>where the bytes live in memory</em>. How much
+      speed is hiding purely in the layout? Most engineers know the textbook answer is "a lot," but
+      textbook knowledge is cheap. I wanted a number I had produced myself, under conditions I could
+      defend, on hardware I own.
+    </p>
+    <p>
+      The trap with benchmarks like this is that it is very easy to cheat without meaning to — to let
+      the fast version quietly do less work, skip a branch, or produce a slightly different answer,
+      and then report a speedup that is really just a difference in what was computed. So I set one
+      rule above all others: both versions must produce a <b>checksum-identical</b> final state. If
+      the two runs disagree by even a rounding error, the benchmark is void. Same work, provably, or
+      it doesn't count.
+    </p>
+
+    <h2>What the two versions are</h2>
+    <p>
+      Both are entity simulators doing ordinary game-style physics — thousands of steering agents
+      that avoid, align with, and group toward their neighbours, drifting through a field of hundreds
+      of thousands of passive particles. Every entity is updated every frame. The only thing that
+      differs is storage:
+    </p>
+    <ul>
+      <li><b>The object-oriented version</b> is how most code is written: each entity is its own
+      object, allocated on the heap, reached through a pointer, carrying all of its fields together.
+      To update the world, the loop walks a list of those pointers, landing somewhere different and
+      unrelated in memory for every single entity.</li>
+      <li><b>The data-oriented version</b> (the ECS) throws the objects away. It keeps the fields the
+      hot loop touches in long contiguous arrays — all the positions together, all the velocities
+      together — so the update is a straight linear sweep through memory instead of a scavenger hunt.</li>
+    </ul>
+    <p>
+      Crucially, the actual arithmetic is shared between them. The steering rules and the integration
+      step are written once and run by both, so there is no room for the layouts to secretly compute
+      different things. The two programs are the same experiment with one variable moved.
+    </p>
+
+    <h2>How I measured it</h2>
+    <p>
+      Rigour here is mostly about removing excuses. Each configuration runs the same fixed number of
+      frames, after a warm-up pass so the caches and branch predictors have reached steady state and
+      I'm not timing cold-start noise. I take the median of several runs rather than the best or the
+      average, because the median is the most honest summary of what you'd actually feel — it ignores
+      a single unlucky hiccup without letting me cherry-pick the fastest outlier. Timing wraps only
+      the simulation, never the drawing, so the GPU can't muddy a measurement that's supposed to be
+      about the CPU and memory. Everything runs on the same machine, one compiler, one optimisation
+      level, so nothing changes between runs except the entity count and the layout.
+    </p>
+    <p>
+      I also swept the entity count across several orders of magnitude rather than reporting a single
+      figure — because a one-number benchmark hides the most interesting part of the story, which is
+      how the gap <em>behaves</em> as the problem grows.
+    </p>
+
+    <h2>The result</h2>
+    <p>
+      The layout win is real, and it widens as the workload grows. Holding the work identical and
+      moving only the memory layout, the data-oriented version pulls further ahead the more entities
+      you throw at it:
+    </p>
+    <ul>
+      <li>At a <b>thousand</b> entities the whole working set still fits comfortably in fast cache, so
+      the layout barely matters — the gap is modest.</li>
+      <li>By <b>a hundred thousand</b> the object version is spending most of its time waiting on
+      memory it can't predict, and the packed version is several times faster doing the same work.</li>
+      <li>At <b>one million</b> entities the data-oriented version is <b>10.4× faster</b> — an order
+      of magnitude, from nothing but where the bytes sit.</li>
+    </ul>
+    <p>
+      And both runs end in a checksum-identical state, so this is not a difference in what was
+      computed. It is the same computation, paid for at two very different prices.
+    </p>
+
+    <h2>Why the gap widens instead of staying flat</h2>
+    <p>
+      This is the part I find genuinely satisfying, because it explains <em>why</em> rather than just
+      reporting <em>what</em>. On modern hardware, arithmetic is nearly free and waiting for memory is
+      the real cost. A value already sitting in the nearest cache is available in a handful of cycles;
+      a value that has to be fetched from main memory can cost a couple of hundred. So the interesting
+      question is never "how much maths" but "how often does the loop stall waiting for data."
+    </p>
+    <p>
+      The object-oriented version stalls constantly, for two compounding reasons. First, its pointers
+      lead to effectively random addresses, and the hardware prefetcher — which is superb at pulling
+      the next chunk of memory in before you ask for it, <em>if</em> your accesses look sequential —
+      sees noise and switches off. Second, memory arrives a whole cache line at a time, and each fat
+      object drags along fields the hot loop never touches, so most of every line fetched is wasted.
+      The packed version inverts both: its access pattern is perfectly sequential, so the prefetcher
+      streams data in ahead of the loop, and every cache line is dense with values the loop actually
+      wants.
+    </p>
+    <p>
+      Small workloads hide all of this, because when everything fits in fast cache there is nothing to
+      wait for and the layouts look identical. The gap only appears once the data outgrows cache and
+      the machine is forced to keep reaching out to slower memory — which is exactly why the speedup
+      is invisible at a thousand entities and dominant at a million. The curve isn't a quirk of my
+      code; it's the shape of the memory hierarchy showing through.
+    </p>
+
+    <h2>The demo, and why it's interactive</h2>
+    <p>
+      A table of numbers convinces the person who already believes you. To make the result something
+      you can <em>feel</em>, I compiled the same simulation to run in the browser and put the layout
+      switch on a key. You watch a live frame-time readout, press a key, and the storage underneath
+      the running simulation swaps between the packed arrays and the scattered objects — same scene,
+      same maths, and the number moves. Add a hundred thousand more entities and you watch the gap
+      widen in real time, the abstract curve turned into something moving in front of you.
+    </p>
+    <p>
+      One honesty note I kept in the demo itself: every entity is genuinely simulated every frame, but
+      only a subset of the passive particles is actually drawn, so the GPU stays out of a measurement
+      that is meant to be about memory. I'd rather state that plainly than let a viewer assume the
+      pixel count and the workload are the same thing.
+    </p>
+
+    <h2>What I actually learned</h2>
+    <ul>
+      <li><b>The honesty constraint is the whole benchmark.</b> The checksum requirement wasn't a nice
+      extra — it was the thing that made the number mean anything. Almost every misleading benchmark
+      I've seen fails precisely here: the fast path quietly does less.</li>
+      <li><b>"It depends on scale" is a real answer, not a dodge.</b> There is a genuine crossover.
+      Below it, the object layout is fine and arguably clearer to read; above it, it falls off a
+      cliff. Knowing <em>where</em> that line sits for your workload is the actual engineering
+      judgement, and it's why I refused to report a single number.</li>
+      <li><b>Predicting then measuring changes how much you trust yourself.</b> I wrote down what I
+      expected before I ran it, and the shape held. That's a very different kind of confidence from
+      reading that memory layout matters and nodding along.</li>
+    </ul>
+
+    <h2>How I'd push it further</h2>
+    <ul>
+      <li><b>Direct cache-miss evidence.</b> The frame times already imply the object version is
+      memory-bound, but I want to show it directly with a profiler that counts cache misses, so the
+      "why" is measured rather than argued. That turns "it's faster" into "here is the stall it
+      removed."</li>
+      <li><b>Vectorisation.</b> A predictable sweep over packed arrays is exactly the shape a compiler
+      can process several entities at once. The scattered version structurally can't be vectorised
+      because of the indirection — which would be a second, independent advantage worth isolating and
+      measuring on its own.</li>
+      <li><b>Where the ceiling is.</b> Past a certain size even the packed version becomes limited by
+      raw memory bandwidth rather than layout. Finding that ceiling tells you when layout has given
+      everything it can and the next win has to come from somewhere else entirely.</li>
+    </ul>
+
+    <div class="callout">
+      <b>Seen this go wrong at real scale?</b> If you've shipped data-oriented systems and know a
+      pitfall I'm glossing over — a measurement I should trust less, a case where the packed layout
+      quietly loses — I'd like to hear it.
+      <a href="mailto:tijiljha8@gmail.com?subject=Lab%3A%20proving%20the%20layout%20win">Tell me where I'm wrong →</a>
+    </div>
+
+    <a class="backlink" href="lab.html">← back to the Lab</a>
+  </main>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="lab.html">← Lab</a>
+      <a href="lab-cache.html">Related: combat loop in cache →</a>
+      <a href="https://ecs-benchmark.vercel.app/" target="_blank" rel="noopener">Live demo →</a>
+      <a href="mailto:tijiljha8@gmail.com">Email</a>
+    </div>
+    <p class="fine">working note · the measured follow-up to “combat loop in cache”</p>
+  </div>
+</footer>
+
+<script src="toc.js"></script>
+</body>
+</html>

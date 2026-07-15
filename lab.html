@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lab — Tijil Jha</title>
+<meta name="description" content="Problem statements Tijil Jha is working through — memory layout, allocation-free frames, geospatial data at scale.">
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="row">
+      <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
+      <nav class="main">
+        <a href="index.html">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="lab.html" aria-current="page">Lab</a>
+        <a href="mailto:tijiljha8@gmail.com">Contact</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h1>The Lab.</h1>
+    <p class="lead">
+      Problem statements I care about — the kind game engines and systems teams live in. Each
+      one is a real problem I understand, the approach I'd take, and the trade-offs that decide
+      whether it works. This is where I think in the open. Pick one to read the full write-up.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <ul class="rows">
+      <li>
+        <span class="n">01</span>
+        <div>
+          <h3><a href="lab-ecs.html">Proving the layout win: a data-oriented ECS</a> <span class="meta">16 Jul 2026</span> <span class="status">shipped</span></h3>
+          <p>The measured follow-up to the cache note below. I built both layouts, held the work
+          identical down to a checksum, and let the numbers settle the argument — 10.4× faster at a
+          million entities, from nothing but where the bytes sit. With a live browser demo.</p>
+          <div class="links"><a href="lab-ecs.html">Read →</a> <a href="https://ecs-benchmark.vercel.app/" target="_blank" rel="noopener">Live demo →</a></div>
+        </div>
+      </li>
+      <li>
+        <span class="n">02</span>
+        <div>
+          <h3><a href="lab-cache.html">Fitting the combat loop in cache</a> <span class="meta">1 Jul 2026</span> <span class="status">in&nbsp;progress</span></h3>
+          <p>The intuitive way to model game entities — one object each, behind a pointer — is
+          the way that starves the CPU. How I'm reshaping the update loop so memory access
+          becomes something the hardware can predict.</p>
+          <div class="links"><a href="lab-cache.html">Read →</a></div>
+        </div>
+      </li>
+      <li>
+        <span class="n">03</span>
+        <div>
+          <h3><a href="lab-alloc.html">A frame with zero allocations</a> <span class="meta">10 Jun 2026</span> <span class="status">exploring</span></h3>
+          <p>At 60fps you get 16.6ms a frame, and one heap allocation in the game loop can eat it.
+          Why frame pacing is a worst-case problem, and how an arena removes the risk entirely.</p>
+          <div class="links"><a href="lab-alloc.html">Read →</a></div>
+        </div>
+      </li>
+      <li>
+        <span class="n">04</span>
+        <div>
+          <h3><a href="lab-raster.html">Processing a country's worth of raster</a> <span class="status">from&nbsp;the&nbsp;job</span></h3>
+          <p>Satellite imagery arrives as terabytes of enormous scenes. How I make that queryable
+          region-by-region — filter before you compute, and never trust a scene you didn't check.</p>
+          <div class="links"><a href="lab-raster.html">Read →</a></div>
+        </div>
+      </li>
+    </ul>
+
+    <h2 class="sec" style="margin-top:44px">On the bench</h2>
+    <ul class="rows">
+      <li>
+        <span class="n">→</span>
+        <div>
+          <h3>Deterministic simulation for replays <span class="status">queued</span></h3>
+          <p>Fixed-point math and a lockstep update so identical inputs always produce an
+          identical frame — the groundwork every replay system and, eventually, every piece
+          of netcode is built on.</p>
+        </div>
+      </li>
+      <li>
+        <span class="n">→</span>
+        <div>
+          <h3>Shrinking the WebAssembly bundle <span class="status">queued</span></h3>
+          <p>Where the bytes actually go, and what really moves the number: aggressive size
+          optimisation, dead-code elimination, and stripping the engine to only what the game calls.</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="index.html">← Home</a>
+      <a href="projects.html">Projects</a>
+      <a href="mailto:tijiljha8@gmail.com">Email</a>
+      <a href="https://github.com/tijiljha" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <p class="fine">problem statements · updated as I work</p>
+  </div>
+</footer>
+
+</body>
+</html>
