@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitting the combat loop in cache — Tijil Jha</title>
+<meta name="description" content="How I'm reshaping a pointer-chasing entity update into a cache-friendly linear sweep, and the bottlenecks that decide whether it pays off.">
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="row">
+      <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
+      <nav class="main">
+        <a href="index.html">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="lab.html" aria-current="page">Lab</a>
+        <a href="mailto:tijiljha8@gmail.com">Contact</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="doclayout">
+  <aside class="toc"><p class="toc-h">Table of Contents</p><nav id="toc"></nav></aside>
+  <main class="doc">
+    <a class="backlink" href="lab.html">← the Lab</a>
+    <h1>Fitting the combat loop in cache</h1>
+    <div class="meta"><span class="status">in progress</span> <span>data-oriented design</span> <span>· started 1 July 2026</span></div>
+
+    <h2>The problem</h2>
+    <p>
+      Most game code models entities the intuitive way: one object per enemy, held behind a pointer,
+      each carrying everything it might ever need — position, health, an AI state, a pointer to its
+      move table, some strings for dialog. It reads beautifully and it runs badly. When the per-frame
+      update loop walks a list of those pointers, it lands in a different, unrelated place in memory
+      for every single enemy. The CPU can't guess where it's going next, so it stalls.
+    </p>
+    <p>
+      That stall is the whole story. On modern hardware, arithmetic is nearly free — the expensive
+      thing is waiting for memory. A hit in L1 cache costs a few cycles; a miss all the way out to
+      main memory costs on the order of a couple of hundred. A loop that misses on most iterations
+      isn't compute-bound, it's memory-bound, and no amount of clever math inside the loop will fix
+      it. The bottleneck isn't the work. It's the layout.
+    </p>
+
+    <h2>Where the time actually goes</h2>
+    <p>
+      Two things quietly kill throughput in the object-per-entity design:
+    </p>
+    <ul>
+      <li><b>Pointer chasing.</b> An array of pointers means the addresses you visit are effectively random. The hardware prefetcher — which is very good at spotting sequential access and pulling the next line in before you ask for it — sees noise and gives up.</li>
+      <li><b>Cold data riding along.</b> Each object mixes the few fields the hot loop touches every frame with the many fields it almost never touches. Because memory is fetched a whole cache line at a time (typically 64 bytes), every access drags along a payload of dialog strings and rarely-used flags, so a single line holds only one entity's worth of useful data instead of several.</li>
+    </ul>
+
+    <h2>How I'm approaching it</h2>
+    <p>
+      Data-oriented design flips the question from "what <em>is</em> an enemy?" to "what does the hot
+      loop actually touch every frame?" — and stores exactly that, contiguously. Instead of one array
+      of fat objects, I keep parallel arrays: all the x positions together, all the y positions
+      together, all the health values together, the AI state packed into the smallest type that fits.
+      The cold data an entity rarely needs is split off into its own storage so it stops evicting the
+      hot data from cache.
+    </p>
+    <p>
+      Once the fields the loop needs are laid out end to end, the update becomes a straight linear
+      sweep through memory. That is the one access pattern the prefetcher reads perfectly: it streams
+      the next lines in ahead of time, so the data is usually already sitting in L1 by the time the
+      loop reaches it. One cache line now carries many entities instead of one, and a predictable,
+      branch-light loop over packed arrays is also exactly the shape a compiler can auto-vectorise —
+      processing several entities per instruction.
+    </p>
+
+    <h2>The bottlenecks I'm watching</h2>
+    <ul>
+      <li><b>Keeping the arrays in step.</b> Splitting one object into many arrays means spawns and deaths have to update every array consistently. I handle removal with swap-and-pop — move the last element into the gap — so the arrays stay dense and the loop never walks over holes.</li>
+      <li><b>Branchy AI undoing the win.</b> A cache-friendly layout still stalls if every entity takes a wildly different code path. The plan is to keep the common case branch-free and batch the rare cases, so the pipeline isn't constantly mispredicting.</li>
+      <li><b>False sharing, later.</b> If I ever update these arrays across threads, two cores writing neighbouring entries on the same cache line will fight over it. Something to design for before it becomes a mystery slowdown, not after.</li>
+    </ul>
+
+    <h2>The honest edge</h2>
+    <p>
+      My combat system is small, so this refactor won't move a frame counter today — and I'd rather
+      say that plainly than dress it up. I'm doing it because it's the <em>correct</em> shape: the
+      exact same layout is what lets a bullet-hell or an RTS push tens of thousands of entities without
+      dropping a frame. To prove the layout win honestly, I'm measuring it against a synthetic
+      large-entity loop where the difference is actually visible, rather than pointing at a benchmark
+      that's too small to say anything.
+    </p>
+
+    <h2>What I expect to see</h2>
+    <p>
+      My prediction is that on the synthetic large-entity loop the layout change alone buys a
+      meaningful speedup — I'd expect the object-per-entity version to spend the majority of its time
+      stalled on memory, and the packed-array version to cut that dramatically, because the same work
+      now streams predictably instead of chasing pointers. The number I actually care about isn't
+      wall-clock time, it's the cache-miss rate: if misses drop sharply and the loop starts landing
+      close to memory bandwidth, the hypothesis held. If the win is small, that tells me the loop was
+      never really memory-bound and the honest answer is to leave it alone.
+    </p>
+
+    <h2>What I'm looking into next</h2>
+    <ul>
+      <li>Measuring it properly with a profiler that exposes cache misses and stalls, not just a stopwatch — the stopwatch can't tell you <em>why</em> something got faster.</li>
+      <li>Whether the AI state machine can stay branch-light enough that the packed layout isn't undone by mispredictions.</li>
+      <li>How far the same shape scales — does it hold at 10k entities, 100k, and where does memory bandwidth become the new ceiling.</li>
+    </ul>
+
+    <div class="callout">
+      <b>Have a better approach?</b> If you've shipped this at real scale and I'm missing something —
+      a smarter split, a measurement pitfall, a case where SoA quietly loses — I'd genuinely like to
+      hear it. <a href="mailto:tijiljha8@gmail.com?subject=Lab%3A%20combat%20loop%20in%20cache">Drop me your suggestions →</a>
+    </div>
+
+    <a class="backlink" href="lab.html">← back to the Lab</a>
+  </main>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="lab.html">← Lab</a>
+      <a href="lab-alloc.html">Next: zero allocations →</a>
+      <a href="mailto:tijiljha8@gmail.com">Email</a>
+    </div>
+    <p class="fine">working note · updated as I go</p>
+  </div>
+</footer>
+
+<script src="toc.js"></script>
+</body>
+</html>

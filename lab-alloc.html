@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A frame with zero allocations — Tijil Jha</title>
+<meta name="description" content="Why a single heap allocation in the game loop shows up as a stutter, and how an arena allocator designs the risk out.">
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="row">
+      <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
+      <nav class="main">
+        <a href="index.html">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="lab.html" aria-current="page">Lab</a>
+        <a href="mailto:tijiljha8@gmail.com">Contact</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="doclayout">
+  <aside class="toc"><p class="toc-h">Table of Contents</p><nav id="toc"></nav></aside>
+  <main class="doc">
+    <a class="backlink" href="lab.html">← the Lab</a>
+    <h1>A frame with zero allocations</h1>
+    <div class="meta"><span class="status">exploring</span> <span>arena allocators</span> <span>· started 10 June 2026</span></div>
+
+    <h2>The problem</h2>
+    <p>
+      A game running at 60fps has 16.6 milliseconds to produce each frame. Miss that budget and the
+      frame is late — the player sees a hitch. The sneakiest way to blow it is a heap allocation
+      inside the game loop. Most of the time it's cheap, which is exactly what makes it dangerous:
+      it hides. Then on one frame in a thousand it isn't cheap, because the allocator hit a slow path,
+      the free list had fragmented, or the operating system had to hand back a fresh page of memory.
+    </p>
+    <p>
+      That's the trap with frame pacing: it's a worst-case problem, not an average one. You can
+      allocate ten thousand times with a lovely average and still ship a visible stutter, because the
+      player feels the one frame that ran long, not the mean. General-purpose allocators are tuned to
+      make the average good and to be safe across every possible usage pattern — which is the right
+      goal for most software and the wrong guarantee for a real-time loop, where predictability
+      matters more than raw speed.
+    </p>
+
+    <h2>How I'm approaching it</h2>
+    <p>
+      The move is to stop asking the general-purpose heap for per-frame memory at all. Almost
+      everything a frame allocates is transient — this frame's particle list, the popup queue,
+      scratch space for pathfinding — and all of it can die at the end of the frame. So I hand that
+      work to an <b>arena</b>: a single block of memory reserved once, up front.
+    </p>
+    <p>
+      Allocating from an arena is trivial: you keep a marker for how far you've filled it, and each
+      request just hands back the next slice and advances the marker. There's no bookkeeping, no
+      search for a free block, no chance of fragmentation. And freeing is the good part — you don't
+      free objects one by one. At the top of the next frame you reset the marker back to the start,
+      and the entire frame's worth of allocations is gone in a single operation. Releasing ten
+      thousand objects costs exactly the same as releasing one.
+    </p>
+    <div class="callout">
+      Long-lived things — textures, audio, the world itself — still live on the normal heap. The
+      arena only owns the churn: the memory whose <em>timing</em> you can't afford to gamble on. That
+      split is the whole trick.
+    </div>
+
+    <h2>The bottlenecks I'm watching</h2>
+    <ul>
+      <li><b>Lifetime discipline.</b> Because the arena is wiped every frame, nothing that must survive into the next frame can point into it. Getting that boundary wrong is a dangling pointer, so the rule has to be simple and enforced: arena memory is frame-local, full stop.</li>
+      <li><b>Sizing the reservation.</b> Too small and you spill back to the very heap you were trying to avoid; too large and you waste memory. That waste bites hardest on a WebAssembly build, where the linear heap is a fixed, precious budget rather than something the OS grows for you on demand.</li>
+      <li><b>Non-trivial destructors.</b> A plain reset is perfect for trivial data, but any object that owns something outside the arena still needs its cleanup to run. Keeping arena contents to simple, self-contained data avoids quietly leaking whatever they hold.</li>
+    </ul>
+
+    <h2>The open question</h2>
+    <p>
+      The honest hard part is that sizing number. Rather than pick it by guess, my plan is to
+      instrument peak per-frame arena usage while the game runs through its heaviest moments, and set
+      the reservation from the measured p99 — big enough to swallow the worst real frame, not so big
+      that a WASM build pays for headroom it never touches. Measure first, then commit the number.
+    </p>
+
+    <h2>What I expect to see</h2>
+    <p>
+      Success here doesn't look like a higher average frame rate — it looks like a <em>flatter</em>
+      one. The metric I'm after is the frame-time graph: the general-heap version should show
+      occasional tall spikes where an allocation hit a slow path, and the arena version should erase
+      them, leaving a much tighter band. If the p99 and p99.9 frame times collapse toward the median
+      while the average barely moves, that's the win — the stutter is gone even though the typical
+      frame was never the problem. If the spikes were coming from somewhere else entirely, I'd rather
+      find that out than assume.
+    </p>
+
+    <h2>What I'm looking into next</h2>
+    <ul>
+      <li>A per-frame reset that stays cheap and safe, plus a debug guard that catches any pointer accidentally outliving its frame.</li>
+      <li>Whether a small set of purpose-sized pools beats one big arena for the most common object types.</li>
+      <li>How this interacts with the WASM linear heap specifically — measuring real peak usage rather than reserving a round number and hoping.</li>
+    </ul>
+
+    <div class="callout">
+      <b>Done this before?</b> If you've fought frame-time spikes in a real engine and have a sharper
+      way to size or structure this — or a reason an arena bites back — I'd love to hear it.
+      <a href="mailto:tijiljha8@gmail.com?subject=Lab%3A%20zero-allocation%20frame">Drop me your suggestions →</a>
+    </div>
+
+    <a class="backlink" href="lab.html">← back to the Lab</a>
+  </main>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="lab-cache.html">← Prev: cache</a>
+      <a href="lab-raster.html">Next: raster →</a>
+      <a href="mailto:tijiljha8@gmail.com">Email</a>
+    </div>
+    <p class="fine">working note · updated as I go</p>
+  </div>
+</footer>
+
+<script src="toc.js"></script>
+</body>
+</html>

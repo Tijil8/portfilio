@@ -3,176 +3,132 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Under the hood — the hiring platform</title>
+<title>WorkEthix — a hiring platform, end to end — Tijil Jha</title>
+<meta name="description" content="A two-sided hiring platform built from an empty repo as the founding engineer — front-end and back-end, auth to interface.">
 <link rel="preconnect" href="https://rsms.me/">
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-<style>
-  :root{
-    --bg:#fcfcfa; --panel:#f5f5f2; --line:#e8e8e4;
-    --text:#3a3a36; --dim:#6b6b66; --faint:#9c9c96;
-    --gold:#c25e1e; --gold-soft:#a34e17; --blue:#c25e1e; --green:#2f7d4f;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{ --bg:#101010; --panel:#181816; --line:#242422;
-           --text:#c9c9c4; --dim:#9a9a94; --faint:#6e6e68;
-           --gold:#e8834a; --gold-soft:#f09a68; --blue:#e8834a; --green:#5fbf85; }
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--text);font-family:'Inter var',Inter,system-ui,-apple-system,sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased}
-  a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
-  .wrap{max-width:820px;margin:0 auto;padding:0 24px}
-  .back{display:inline-block;color:var(--faint);font-size:13px;letter-spacing:1px;margin:34px 0 0}
-  .back:hover{color:var(--gold);text-decoration:none}
-  header.top{padding:20px 0 60px;border-bottom:1px solid var(--line)}
-  .eyebrow{color:var(--gold);font-size:12px;letter-spacing:4px;text-transform:uppercase;margin:40px 0 18px;display:flex;align-items:center;gap:10px}
-  .eyebrow::before{content:"";width:26px;height:1px;background:var(--gold)}
-  h1{font-size:clamp(30px,6vw,52px);letter-spacing:1px;color:var(--text);line-height:1.1;margin-bottom:18px}
-  h2{font-size:23px;color:var(--text);letter-spacing:.5px;margin-bottom:14px}
-  .sub{color:var(--dim);font-size:16px;max-width:660px}
-  p{color:var(--dim);margin-bottom:14px}
-  .accent{color:var(--gold)}
-  section{padding:46px 0;border-bottom:1px solid var(--line)}
-  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:30px 0 10px}
-  .metric{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;text-align:center}
-  .metric .n{color:var(--gold);font-size:22px;letter-spacing:1px}
-  .metric .l{color:var(--faint);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-top:6px}
-  code{font-family:ui-monospace,"SF Mono",Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:2px 7px;color:var(--gold-soft);font-size:13px}
-  pre{font-family:ui-monospace,"SF Mono",Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:18px 20px;overflow-x:auto;margin:16px 0;font-size:13px;line-height:1.6}
-  pre .c{color:var(--faint)}pre .k{color:#b3403f}pre .s{color:var(--green)}pre .f{color:var(--blue)}
-  ul{list-style:none;margin:10px 0}
-  ul li{padding:6px 0 6px 22px;position:relative;color:var(--dim)}
-  ul li::before{content:"▸";position:absolute;left:0;color:var(--gold)}
-  .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0}
-  .role{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
-  .role h3{color:var(--text);font-size:15px;letter-spacing:1px;margin-bottom:8px}
-  .role h3 .b{color:var(--gold)}
-  .role p{font-size:13px;margin:0}
-  .pipeline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0}
-  .pipeline .stage{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:9px 14px;font-size:13px;color:var(--text)}
-  .pipeline .arrow{color:var(--gold);font-size:16px}
-  .tags{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 0}
-  .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:4px 12px;letter-spacing:.5px}
-  footer{padding:56px 0 80px;text-align:center}
-  .btn{display:inline-block;padding:11px 20px;border:1px solid var(--gold);border-radius:7px;color:var(--gold);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;transition:.15s}
-  .btn:hover{background:var(--gold);color:#fff;text-decoration:none}
-  @media(max-width:620px){.metrics,.roles{grid-template-columns:1fr}}
-</style>
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 
-<header class="top">
+<header class="site">
   <div class="wrap">
-    <a class="back" href="index.html">← back to portfolio</a>
-    <div class="eyebrow">under the hood</div>
-    <h1>A hiring platform,<br>built end-to-end.</h1>
-    <p class="sub">
-      A two-sided recruitment product where employers post roles and candidates apply —
-      with an admin layer running the whole thing behind it. I was the founding engineer:
-      empty repo to a live product, front-end and back-end, mine.
-    </p>
-    <div class="metrics">
-      <div class="metric"><div class="n">3</div><div class="l">user roles</div></div>
-      <div class="metric"><div class="n">Next.js 15</div><div class="l">app router</div></div>
-      <div class="metric"><div class="n">Supabase</div><div class="l">postgres + rls</div></div>
-      <div class="metric"><div class="n">0→live</div><div class="l">founding engineer</div></div>
+    <div class="row">
+      <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
+      <nav class="main">
+        <a href="index.html">Home</a>
+        <a href="projects.html" aria-current="page">Projects</a>
+        <a href="lab.html">Lab</a>
+        <a href="mailto:tijiljha8@gmail.com">Contact</a>
+      </nav>
     </div>
   </div>
 </header>
 
-<!-- ROLES -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 01 · the marketplace</div>
-    <h2>Three roles, one platform</h2>
-    <p>The product is a two-sided marketplace with an operations layer on top. Every role sees a different surface, backed by the same data model with strict row-level access.</p>
-    <div class="roles">
-      <div class="role"><h3><span class="b">◆</span> Employer</h3><p>Posts jobs, manages listings, and reviews incoming applications with notifications on each one.</p></div>
-      <div class="role"><h3><span class="b">◆</span> Candidate</h3><p>Builds a profile, browses roles, and applies — with application state tracked end-to-end.</p></div>
-      <div class="role"><h3><span class="b">◆</span> Admin</h3><p>A control panel over jobs, reviews, case studies and users — the operations layer that runs the platform.</p></div>
-    </div>
-  </div>
-</section>
+<div class="doclayout">
+  <aside class="toc"><p class="toc-h">Table of Contents</p><nav id="toc"></nav></aside>
+  <main class="doc">
+    <a class="backlink" href="projects.html">← projects</a>
+    <h1>A hiring platform, built end to end.</h1>
+    <div class="meta"><span class="status">live</span> <span>Next.js · Supabase · founding engineer</span></div>
 
-<!-- AUTH -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 02 · auth &amp; access</div>
-    <h2>Auth, sessions, and row-level security</h2>
-    <p>
-      A full authentication stack — signup, email verification, login, forgot/reset password —
-      with hashed credentials and signed JWT sessions. The real access control lives in the
-      database: <span class="accent">Postgres row-level security</span> policies decide, per row,
-      what an employer, candidate, or admin can read and write.
+    <p class="lead">
+      WorkEthix is a two-sided recruitment product — employers post roles, candidates apply, and an
+      admin layer runs the whole thing behind them. I was the founding engineer: empty repo to a live
+      product, front-end and back-end, mine to own. This is the story of what that actually involved.
     </p>
-    <pre><span class="c">-- access is enforced in the database, not just the app</span>
-<span class="k">create policy</span> <span class="s">"employers manage their own jobs"</span>
-  <span class="k">on</span> jobs <span class="k">for all</span>
-  <span class="k">using</span> ( auth.uid() = employer_id );
 
-<span class="k">create policy</span> <span class="s">"candidates read published jobs"</span>
-  <span class="k">on</span> jobs <span class="k">for select</span>
-  <span class="k">using</span> ( status = <span class="s">'published'</span> );</pre>
-    <ul>
-      <li>Password hashing with bcrypt; stateless sessions via signed JWTs</li>
-      <li>Email verification + password reset flows, transactional email on send</li>
-      <li>Google OAuth wired in alongside email/password</li>
-    </ul>
-  </div>
-</section>
+    <div class="metrics">
+      <div class="metric"><div class="n">3</div><div class="l">user roles</div></div>
+      <div class="metric"><div class="n">Next.js</div><div class="l">app router</div></div>
+      <div class="metric"><div class="n">Supabase</div><div class="l">postgres + rls</div></div>
+      <div class="metric"><div class="n">0 → live</div><div class="l">founding engineer</div></div>
+    </div>
 
-<!-- API -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 03 · the api</div>
-    <h2>A typed API behind every action</h2>
+    <h2>The marketplace — three roles, one platform</h2>
     <p>
-      Next.js route handlers back the whole product — auth, jobs, applications, reviews,
-      notifications and newsletter — all in TypeScript against a Supabase Postgres backend.
+      The product is a two-sided marketplace with an operations layer on top. Every role sees a
+      different surface, but they're all backed by the same data model with strict per-user access —
+      so the hard part isn't three separate apps, it's one system that shows each person only what
+      they're allowed to touch.
+    </p>
+    <ul>
+      <li><b>Employer</b> — posts jobs, manages listings, and reviews incoming applications, with a notification on each one.</li>
+      <li><b>Candidate</b> — builds a profile, browses roles, and applies, with application status tracked from submitted to reviewed.</li>
+      <li><b>Admin</b> — a control panel over jobs, reviews, case studies and users: the operations layer that keeps the platform running.</li>
+    </ul>
+
+    <h2>Auth and access — enforced in the database</h2>
+    <p>
+      A product like this lives or dies on access control. I built the full authentication stack —
+      signup, email verification, login, forgot and reset password, plus Google sign-in alongside
+      email and password — with hashed credentials and signed session tokens. But the decision that
+      matters is <em>where</em> access is enforced.
+    </p>
+    <p>
+      Rather than trust the application layer to remember every rule, I pushed access control down into
+      the database itself with Postgres row-level security. Each row carries its own policy: an
+      employer can only see and edit their own jobs, a candidate can only read published ones, an admin
+      can see across. Even if a bug slipped through the API, the database itself refuses to hand over
+      data the caller isn't entitled to. Security by default, not by discipline.
+    </p>
+
+    <h2>The API — a typed action behind every click</h2>
+    <p>
+      The whole product runs on typed route handlers — auth, jobs, applications, reviews,
+      notifications, newsletter — in TypeScript against the Postgres backend. The flows that mattered
+      most were the ones that touch more than one party:
     </p>
     <div class="pipeline">
       <span class="stage">candidate applies</span><span class="arrow">→</span>
-      <span class="stage">/api/jobs/[id]</span><span class="arrow">→</span>
-      <span class="stage">RLS-checked write</span><span class="arrow">→</span>
+      <span class="stage">access-checked write</span><span class="arrow">→</span>
       <span class="stage">notify employer</span><span class="arrow">→</span>
       <span class="stage">email out</span>
     </div>
     <ul>
-      <li>Job CRUD with per-listing endpoints and application tracking</li>
-      <li>Notification pipeline that emails the employer on every new application</li>
-      <li>Reviews &amp; case-studies managed through the admin API</li>
-      <li>Newsletter subscription with a transactional-email backend</li>
+      <li>Job management with per-listing endpoints and end-to-end application tracking.</li>
+      <li>A notification pipeline that emails the employer the moment a new application lands.</li>
+      <li>Reviews and case studies managed through the admin surface.</li>
+      <li>Newsletter subscription wired to a transactional-email backend.</li>
     </ul>
-  </div>
-</section>
 
-<!-- FRONTEND -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 04 · the front-end</div>
-    <h2>A polished, responsive UI</h2>
-    <ul>
-      <li>Next.js App Router with server and client components in TypeScript</li>
-      <li>Dark / light theming, animated with Framer Motion</li>
-      <li>MUI + Radix primitives + Tailwind for a consistent, accessible component layer</li>
-      <li>Rich-text editing (Quill / TinyMCE) for job descriptions and content</li>
-      <li>Fully responsive — built mobile-first</li>
-    </ul>
-    <div class="tags">
-      <span class="tag">Next.js 15</span><span class="tag">TypeScript</span><span class="tag">React 19</span>
-      <span class="tag">Supabase</span><span class="tag">PostgreSQL + RLS</span><span class="tag">JWT</span><span class="tag">bcrypt</span>
-      <span class="tag">Tailwind</span><span class="tag">MUI</span><span class="tag">Radix</span><span class="tag">Framer Motion</span>
-      <span class="tag">Nodemailer / Resend</span><span class="tag">Vercel</span>
+    <h2>The front-end — polished and responsive</h2>
+    <p>
+      The last layer is the one people actually judge you on. It's a Next.js App Router front-end in
+      TypeScript, built mobile-first and fully responsive, with light and dark theming and considered
+      motion rather than decoration. A consistent, accessible component layer keeps every surface —
+      employer, candidate, admin — feeling like one product, and rich-text editing handles job
+      descriptions and content without fighting the user.
+    </p>
+
+    <div class="callout">
+      What I'm proudest of here isn't any single feature — it's that one person carried a real,
+      multi-role product from an empty repository to something people use, and made the boring,
+      invisible parts (auth, access, data integrity) the strongest parts of it.
     </div>
-  </div>
-</section>
 
-<footer>
+    <div class="tags">
+      <span class="tag">Next.js</span><span class="tag">TypeScript</span><span class="tag">React</span>
+      <span class="tag">Supabase</span><span class="tag">PostgreSQL + RLS</span><span class="tag">JWT</span><span class="tag">bcrypt</span>
+      <span class="tag">Tailwind</span><span class="tag">Framer Motion</span><span class="tag">Transactional email</span><span class="tag">Vercel</span>
+    </div>
+
+    <a class="backlink" href="projects.html">← back to projects</a>
+    <p style="margin-top:18px"><a href="https://workethixrec.com/" target="_blank" rel="noopener">Visit the live site →</a></p>
+  </main>
+</div>
+
+<footer class="site">
   <div class="wrap">
-    <a class="btn" href="https://workethixrec.com/" target="_blank" rel="noopener">Visit the live site →</a>
-    <p style="margin-top:26px;color:var(--faint);font-size:13px"><a href="index.html">← back to portfolio</a></p>
+    <div class="links">
+      <a href="projects.html">← Projects</a>
+      <a href="https://workethixrec.com/" target="_blank" rel="noopener">Live site →</a>
+      <a href="mailto:tijiljha8@gmail.com">Email</a>
+    </div>
+    <p class="fine">founding engineer · 0 → live</p>
   </div>
 </footer>
 
+<script src="toc.js"></script>
 </body>
 </html>

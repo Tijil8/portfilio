@@ -3,195 +3,170 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Under the hood — the game engine</title>
+<title>How the game is built — Tijil Jha</title>
+<meta name="description" content="The engineering behind a playable portfolio: a hand-written C++ game — combat, AI, world, story and build — compiled to WebAssembly so it runs in any browser.">
 <link rel="preconnect" href="https://rsms.me/">
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-<style>
-  :root{
-    --bg:#fcfcfa; --panel:#f5f5f2; --line:#e8e8e4;
-    --text:#3a3a36; --dim:#6b6b66; --faint:#9c9c96;
-    --gold:#c25e1e; --gold-soft:#a34e17; --blue:#c25e1e; --green:#2f7d4f;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{ --bg:#101010; --panel:#181816; --line:#242422;
-           --text:#c9c9c4; --dim:#9a9a94; --faint:#6e6e68;
-           --gold:#e8834a; --gold-soft:#f09a68; --blue:#e8834a; --green:#5fbf85; }
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--text);font-family:'Inter var',Inter,system-ui,-apple-system,sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased}
-  a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
-  .wrap{max-width:820px;margin:0 auto;padding:0 24px}
-  .back{display:inline-block;color:var(--faint);font-size:13px;letter-spacing:1px;margin:34px 0 0}
-  .back:hover{color:var(--gold);text-decoration:none}
-  header.top{padding:20px 0 60px;border-bottom:1px solid var(--line)}
-  .eyebrow{color:var(--gold);font-size:12px;letter-spacing:4px;text-transform:uppercase;margin:40px 0 18px;display:flex;align-items:center;gap:10px}
-  .eyebrow::before{content:"";width:26px;height:1px;background:var(--gold)}
-  h1{font-size:clamp(30px,6vw,52px);letter-spacing:1px;color:var(--text);line-height:1.1;margin-bottom:18px}
-  h2{font-size:23px;color:var(--text);letter-spacing:.5px;margin-bottom:14px}
-  .sub{color:var(--dim);font-size:16px;max-width:640px}
-  p{color:var(--dim);margin-bottom:14px}
-  .accent{color:var(--gold)}
-  section{padding:46px 0;border-bottom:1px solid var(--line)}
-  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:30px 0 10px}
-  .metric{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;text-align:center}
-  .metric .n{color:var(--gold);font-size:26px;letter-spacing:1px}
-  .metric .l{color:var(--faint);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-top:6px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:26px;margin-top:18px}
-  .card h2{margin-bottom:8px;font-size:20px}
-  .card .tagline{color:var(--gold-soft);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
-  code{font-family:ui-monospace,"SF Mono",Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:2px 7px;color:var(--gold-soft);font-size:13px}
-  pre{font-family:ui-monospace,"SF Mono",Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:18px 20px;overflow-x:auto;margin:16px 0;font-size:13px;line-height:1.6}
-  pre .c{color:var(--faint)}pre .k{color:#b3403f}pre .s{color:var(--green)}pre .f{color:var(--blue)}
-  ul{list-style:none;margin:10px 0}
-  ul li{padding:6px 0 6px 22px;position:relative;color:var(--dim)}
-  ul li::before{content:"▸";position:absolute;left:0;color:var(--gold)}
-  .pipeline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0}
-  .pipeline .stage{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:9px 14px;font-size:13px;color:var(--text)}
-  .pipeline .arrow{color:var(--gold);font-size:16px}
-  .tags{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 0}
-  .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:4px 12px;letter-spacing:.5px}
-  footer{padding:56px 0 80px;text-align:center}
-  .btn{display:inline-block;padding:11px 20px;border:1px solid var(--gold);border-radius:7px;color:var(--gold);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;transition:.15s}
-  .btn:hover{background:var(--gold);color:#fff;text-decoration:none}
-  @media(max-width:620px){.metrics{grid-template-columns:1fr 1fr}}
-</style>
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 
-<header class="top">
+<header class="site">
   <div class="wrap">
-    <a class="back" href="index.html">← back to portfolio</a>
-    <div class="eyebrow">under the hood</div>
-    <h1>A game engine,<br>hand-written in C++.</h1>
-    <p class="sub">
-      No Unity. No Unreal. No third-party game engine. Every system below — rendering,
-      combat, AI, world, story — was written from scratch in C++17 and compiled to
-      WebAssembly so it runs in any browser at 60fps.
-    </p>
-    <div class="metrics">
-      <div class="metric"><div class="n">0</div><div class="l">engines used</div></div>
-      <div class="metric"><div class="n">C++17</div><div class="l">core language</div></div>
-      <div class="metric"><div class="n">WASM</div><div class="l">compile target</div></div>
-      <div class="metric"><div class="n">60fps</div><div class="l">in-browser</div></div>
+    <div class="row">
+      <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
+      <nav class="main">
+        <a href="index.html">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="lab.html">Lab</a>
+        <a href="mailto:tijiljha8@gmail.com">Contact</a>
+      </nav>
     </div>
   </div>
 </header>
 
-<!-- COMBAT -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 01 · combat</div>
-    <h2>A deterministic parry state machine</h2>
-    <p>
-      Combat is a finite state machine with frame-accurate timing windows. The enemy
-      telegraphs, a parry window opens for a fixed number of milliseconds, and the
-      resolution is fully deterministic — the same inputs always produce the same
-      outcome, which makes the timing <span class="accent">learnable, not luck.</span>
+<div class="doclayout">
+  <aside class="toc"><p class="toc-h">Table of Contents</p><nav id="toc"></nav></aside>
+  <main class="doc">
+    <a class="backlink" href="projects.html">← projects</a>
+    <h1>How the game is built</h1>
+    <div class="meta"><span class="status">write-up</span> <span>a playable portfolio</span> <span>· C++17 → WebAssembly</span></div>
+
+    <p class="lead">
+      The game on the front page isn't a template or a toy built on someone else's engine.
+      Every system in it — how it draws, how it fights, how the crowd moves, how the story
+      advances, how it ends up in your browser — is code I wrote and can explain end to end.
+      This page is that explanation, in plain language.
     </p>
-    <pre><span class="c">// each attack cycles through timed phases</span>
-<span class="k">enum class</span> Phase { PlayerMenu, EnemyWindup, <span class="f">ParryWindow</span>, Resolve };
 
-<span class="c">// a perfect parry lands inside the inner window → counter + no damage</span>
-<span class="k">if</span> (input == PARRY && elapsed &lt;= <span class="f">windowMs</span>)
-    resolveParry(elapsed &lt;= perfectMs ? PERFECT : GOOD);</pre>
-    <ul>
-      <li>Per-enemy tuning: windup, parry window, and perfect window in milliseconds</li>
-      <li>A zero-damage training dummy teaches the rhythm before any real fight</li>
-      <li>Difficulty scales the windows — tighter timing, faster tells</li>
-    </ul>
-  </div>
-</section>
-
-<!-- AI -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 02 · emergent ai</div>
-    <h2>Boids — flocking from three rules</h2>
+    <h2>Why write the whole thing</h2>
     <p>
-      The ambient life in the world isn't scripted. It's a classic
-      <span class="accent">boids</span> simulation: each agent follows only three local
-      rules, and coordinated flocking <em>emerges</em> — no leader, no central control.
+      I could have reached for a ready-made engine and shipped faster. I didn't, because the
+      point of this project was to understand the machine underneath, not to hide it. Writing
+      the loop, the renderer, the state machines and the build myself means there's no layer I
+      can't reason about when something goes wrong — and it forced me to make the kind of
+      decisions a big engine normally makes for you: what runs every frame, what memory gets
+      touched, what happens when the browser is the target instead of a desktop.
     </p>
-    <pre><span class="c">// three local rules, applied per-agent, every frame</span>
-velocity += <span class="f">separation</span>(neighbors)   <span class="c">// don't crowd</span>
-          + <span class="f">alignment</span>(neighbors)    <span class="c">// match heading</span>
-          + <span class="f">cohesion</span>(neighbors);    <span class="c">// steer to center</span></pre>
-    <ul>
-      <li>Neighbour queries per frame, tuned for stable 60fps with many agents</li>
-      <li>Emergent behaviour — the flock looks intelligent with zero scripting</li>
-    </ul>
-  </div>
-</section>
-
-<!-- RENDERING / WORLD -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 03 · rendering &amp; world</div>
-    <h2>Tile atlases, a following camera, and per-act worlds</h2>
-    <ul>
-      <li>Custom tile-atlas renderer with point-filtered pixel art, drawn from packed sprite sheets</li>
-      <li>A <code>Camera2D</code> that follows the player and clamps to each room's bounds</li>
-      <li>Hand-authored maps per act, each with its own layout, props, NPCs and interaction zones</li>
-      <li>A world/entity model: walkers, signposts, pickups and trigger zones as data, not hard-code</li>
-    </ul>
-  </div>
-</section>
-
-<!-- STORY ENGINE -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 04 · story engine</div>
-    <h2>A cutscene &amp; dialogue state machine</h2>
     <p>
-      The narrative runs on its own event-flag system — one integer gates progression,
-      another carries momentum forward. Scripted sequences feed a dialogue box, then hand
-      control back to exploration. Classic RPG architecture, built from first principles.
+      The result is small on purpose. It's a real game you can play in a tab, and it's also a
+      readable codebase — the two goals pull in the same direction when nothing is hidden.
     </p>
-    <div class="pipeline">
-      <span class="stage">explore</span><span class="arrow">→</span>
-      <span class="stage">trigger zone</span><span class="arrow">→</span>
-      <span class="stage">cutscene</span><span class="arrow">→</span>
-      <span class="stage">fight</span><span class="arrow">→</span>
-      <span class="stage">resolve + carry momentum</span>
+
+    <h2>The heartbeat: one loop, sixty times a second</h2>
+    <p>
+      Everything hangs off a single game loop that runs about sixty times a second. Each pass
+      does the same three things in order: read input, advance the simulation by one small step
+      of time, then draw the result. The discipline that makes it feel smooth is keeping every
+      one of those passes inside its time budget — a frame at 60fps has roughly sixteen
+      milliseconds to do all of its work, and if a frame runs long the player feels it as a
+      hitch. So the loop is deliberately boring and predictable: no surprises, no work that
+      sometimes takes ten times as long as usual. Most of the interesting engineering in the
+      game is really about protecting that budget.
+    </p>
+
+    <h2>Combat: timing you can learn, not luck</h2>
+    <p>
+      The fights are built as a state machine — a small set of clearly defined states the
+      encounter moves between: the player choosing an action, the enemy winding up a strike, a
+      brief window where a parry will land, and then the resolution. The window that decides a
+      parry is measured in milliseconds and is the same every time, so the outcome is
+      deterministic: identical timing always produces the identical result. That's the whole
+      design goal — the difficulty comes from reading the enemy's tell and reacting, never from
+      a dice roll you can't see.
+    </p>
+    <ul>
+      <li>Each enemy is tuned by data — how long it winds up, how wide its parry window is, how tight the perfect-parry window sits inside it — so new fights are authored, not re-coded.</li>
+      <li>A harmless training dummy lets you feel the rhythm with zero risk before a real fight, because a learnable system is only fair if you're given a place to learn it.</li>
+      <li>Higher difficulty doesn't cheat; it just narrows the windows and speeds up the tells, so the same skill is asked for with less margin.</li>
+    </ul>
+
+    <h2>The crowd: intelligence that isn't scripted</h2>
+    <p>
+      The ambient life moving around the world isn't following hand-placed paths. It's a
+      flocking simulation where every agent obeys just three simple local rules — don't crowd
+      your neighbours, roughly match their heading, and steer toward the middle of the group.
+      Nobody is in charge, yet coordinated, natural-looking movement emerges from those rules
+      alone. It's a small showcase of a big idea: complex behaviour can fall out of simple parts,
+      and that's often cheaper and more convincing than scripting every actor by hand.
+    </p>
+    <p>
+      The engineering catch is that each agent has to look at its neighbours every frame, which
+      can get expensive as the crowd grows. Keeping that inside the frame budget is exactly the
+      kind of constraint the whole engine is organised around.
+    </p>
+
+    <h2>Drawing the world</h2>
+    <p>
+      The visuals are deliberately pixel art, drawn by a small renderer of my own built on top
+      of a lightweight graphics library. Art is packed into sprite sheets and stamped onto a
+      grid of tiles, kept crisp with point sampling so the pixels stay sharp instead of blurring.
+      A camera follows the player and is clamped to the edges of each room, so it never drifts
+      off into empty space. Each act of the story is its own hand-authored map — its own layout,
+      props, characters and trigger zones — described as data the engine reads, rather than
+      logic baked into the code. That separation is what lets me add a new area by editing data
+      instead of rewriting the engine.
+    </p>
+
+    <h2>Telling the story</h2>
+    <p>
+      The narrative runs on its own small system of flags. Walking into a trigger zone hands
+      control from exploration over to a scripted sequence — a cutscene, some dialogue, a
+      fight — and when that finishes, control passes back to exploration with the story's
+      progress recorded. It's the same well-worn architecture classic RPGs use, rebuilt from
+      first principles: a handful of state variables gate what's available and carry the
+      momentum of the plot forward, so the world remembers what you've done without any of it
+      being hard-wired.
+    </p>
+
+    <h2>From C++ to your browser</h2>
+    <p>
+      The whole thing is written in modern C++ and compiles two different ways from the exact
+      same source. One path builds a native program on my machine for fast testing; the other
+      compiles it to WebAssembly — a portable, near-native format browsers run directly — so the
+      game loads in any modern browser with no plugin, no install, nothing to download. Sharing
+      one codebase between the two means I develop and debug quickly on the desktop and know the
+      web build is running the same logic, not a separate port that can quietly drift out of sync.
+    </p>
+
+    <h2>Keeping myself honest</h2>
+    <p>
+      Because I'm the only one working on it, the game checks itself. A headless mode renders
+      frames without a window so screenshots can be captured and compared automatically, and a
+      small suite of self-tests asserts the rules that matter most — a perfect parry must deal
+      zero damage, timing windows must resolve the way they're specified. Those tests are how a
+      solo project stays trustworthy: when I change combat, the machine tells me immediately if I
+      broke a promise the game makes to the player.
+    </p>
+
+    <div class="callout">
+      The short version: a real, hand-written game that runs in a browser, built to be as
+      readable as it is playable — every system here is something I can open up and walk you through.
     </div>
-  </div>
-</section>
 
-<!-- BUILD -->
-<section>
-  <div class="wrap">
-    <div class="eyebrow">system 05 · the build</div>
-    <h2>C++ source → WebAssembly, no plugins</h2>
-    <p>
-      The exact same C++ source compiles two ways: a native binary for fast local testing
-      (with a headless screenshot harness and a self-test suite), and a WebAssembly bundle
-      for the web — no browser plugins, no downloads.
-    </p>
-    <div class="pipeline">
-      <span class="stage">C++17 source</span><span class="arrow">→</span>
-      <span class="stage">emscripten</span><span class="arrow">→</span>
-      <span class="stage">.wasm + .js</span><span class="arrow">→</span>
-      <span class="stage">runs in any browser</span>
-    </div>
-    <ul>
-      <li>Headless render harness for automated screenshot verification</li>
-      <li>A self-test suite asserting combat math (perfect-parry = 0 damage, etc.)</li>
-    </ul>
     <div class="tags">
       <span class="tag">C++17</span><span class="tag">raylib</span><span class="tag">emscripten</span>
-      <span class="tag">WebAssembly</span><span class="tag">finite state machines</span><span class="tag">boids</span>
-      <span class="tag">Camera2D</span><span class="tag">tile atlas</span><span class="tag">deterministic sim</span>
+      <span class="tag">WebAssembly</span><span class="tag">state machines</span><span class="tag">flocking / boids</span>
+      <span class="tag">tile renderer</span><span class="tag">deterministic sim</span>
     </div>
-  </div>
-</section>
 
-<footer>
+    <a class="chatbtn" href="https://e33-parry-combat.vercel.app" target="_blank" rel="noopener">▶ Go play it</a>
+
+    <a class="backlink" href="projects.html">← back to projects</a>
+  </main>
+</div>
+
+<footer class="site">
   <div class="wrap">
-    <a class="btn" href="https://e33-parry-combat.vercel.app" target="_blank" rel="noopener">▶ Now go play it</a>
-    <p style="margin-top:26px;color:var(--faint);font-size:13px"><a href="index.html">← back to portfolio</a></p>
+    <div class="links">
+      <a href="projects.html">← Projects</a>
+      <a href="lab.html">The Lab →</a>
+      <a href="mailto:tijiljha8@gmail.com">Email</a>
+    </div>
+    <p class="fine">write-up · a playable portfolio</p>
   </div>
 </footer>
 
+<script src="toc.js"></script>
 </body>
 </html>

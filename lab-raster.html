@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Processing a country's worth of raster — Tijil Jha</title>
+<meta name="description" content="How I make terabytes of satellite imagery queryable region-by-region without melting the machine: filter before you compute, and never trust a scene you didn't check.">
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="row">
+      <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
+      <nav class="main">
+        <a href="index.html">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="lab.html" aria-current="page">Lab</a>
+        <a href="mailto:tijiljha8@gmail.com">Contact</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="doclayout">
+  <aside class="toc"><p class="toc-h">Table of Contents</p><nav id="toc"></nav></aside>
+  <main class="doc">
+    <a class="backlink" href="lab.html">← the Lab</a>
+    <h1>Processing a country's worth of raster</h1>
+    <div class="meta"><span class="status">from the job</span> <span>geospatial pipelines</span> <span>· write-up</span></div>
+
+    <h2>The problem</h2>
+    <p>
+      Earth-observation data is big, messy, and never stops arriving. A single satellite scene can be
+      hundreds of megabytes of imagery, tagged with the time it was captured, the footprint on the
+      ground it covers, and the spectral bands it recorded. Cover a whole country over months and
+      you're looking at terabytes of these scenes, most of which you don't actually need for any given
+      question. The naïve approach — download everything, process everything — melts the machine and
+      the budget. The real work is answering spatial questions over that mountain without touching
+      most of it.
+    </p>
+    <p>
+      This is my day-to-day: building the pipelines and interfaces that turn raw imagery and boundary
+      data into clean, queryable products teams rely on. Kept general here — the shape of the work,
+      not any specific dataset.
+    </p>
+
+    <h2>The principle: filter before you compute</h2>
+    <p>
+      Every expensive step should run on the smallest possible amount of data, and the cheap filters
+      come first. Before a single pixel is read, scenes are narrowed by the three things that are cheap
+      to check and eliminate the most: does the scene's footprint even intersect the region I care
+      about, does its timestamp fall in my window, and is it too cloudy to be useful? A catalog
+      (I work with the STAC standard for indexing imagery) lets me ask exactly that, so I search by
+      area of interest and date range instead of by hand, and throw out the majority of scenes before
+      any heavy processing starts.
+    </p>
+    <div class="pipeline">
+      <span class="stage">region list</span><span class="arrow">→</span>
+      <span class="stage">resolve geometry</span><span class="arrow">→</span>
+      <span class="stage">catalog search</span><span class="arrow">→</span>
+      <span class="stage">clip + reduce</span><span class="arrow">→</span>
+      <span class="stage">write to PostGIS</span>
+    </div>
+    <p>
+      Only the scenes that survive that funnel get the expensive treatment: reprojected to a common
+      coordinate system, clipped to the exact region boundary, and reduced to the handful of values
+      that actually matter downstream. Results land in a spatial database (PostgreSQL / PostGIS) with
+      the right spatial indexes, so the front end can later ask "what's inside this boundary?" or "what
+      changed over this period?" and get an answer in milliseconds instead of re-reading imagery.
+    </p>
+
+    <h2>What makes it hard at scale</h2>
+    <ul>
+      <li><b>It must be resumable.</b> A run over thousands of regions <em>will</em> be interrupted — a node dies, an upstream source times out. So every step is idempotent: re-running it produces the same result and skips work already done, instead of starting over or double-counting.</li>
+      <li><b>Bad data must never win silently.</b> Scenes go missing, geometries are malformed, a boundary has no imagery at all. The pipeline treats these as first-class outcomes with explicit checks, so a gap gets recorded and surfaced rather than quietly corrupting an output that looks fine.</li>
+      <li><b>Region IDs aren't geometries.</b> A lot of the real work is the unglamorous plumbing: turning an identifier for a region into an actual shape the pipeline can query on, and doing it consistently across many administrative levels and sources.</li>
+      <li><b>Raster and vector have to meet.</b> Clipping imagery (raster) to boundaries (vector) and reducing it correctly is the heart of it — done with the standard Python geospatial stack, run as repeatable batch jobs rather than one-off scripts.</li>
+    </ul>
+
+    <h2>The last mile</h2>
+    <p>
+      None of it matters if the result is unusable, so the processed data is exposed through service
+      APIs that return map-ready GeoJSON, and rendered in React map dashboards where people filter and
+      drill down by region and time. The goal across the whole chain is to make something genuinely
+      heavy — terabytes of imagery — feel light and queryable to the person at the other end.
+    </p>
+
+    <h2>What good looks like</h2>
+    <p>
+      The result I'm chasing is that a question over a huge area returns in milliseconds, and adding
+      more imagery makes the archive richer without making queries slower — because the heavy lifting
+      already happened at ingest and the query only ever touches the pre-computed slice it needs. The
+      other half of "good" is trust: every output should be traceable back to the scenes it came from,
+      with gaps and bad data flagged rather than silently averaged away. A fast answer nobody trusts is
+      worthless.
+    </p>
+
+    <h2>What I'm looking into next</h2>
+    <ul>
+      <li>Pushing more of the filtering into the catalog query itself, so even fewer scenes ever get downloaded.</li>
+      <li>Better boundary resolution — turning region identifiers into geometries consistently across administrative levels and sources is where a surprising amount of the real work lives.</li>
+      <li>Making the quality checks louder: a dashboard of what's missing and why, so gaps are visible before anyone downstream trips over them.</li>
+    </ul>
+
+    <div class="callout">
+      The one-line version: don't process the mountain, index it — then only ever touch the slice a
+      question actually needs.
+    </div>
+
+    <div class="callout">
+      <b>Work with geospatial data?</b> If you've built pipelines like this and have a sharper way to
+      filter, resolve boundaries, or catch bad scenes early, I'd love to compare notes.
+      <a href="mailto:tijiljha8@gmail.com?subject=Lab%3A%20raster%20processing">Drop me your suggestions →</a>
+    </div>
+
+    <div class="tags">
+      <span class="tag">Python</span><span class="tag">STAC</span><span class="tag">rasterio</span>
+      <span class="tag">GeoPandas</span><span class="tag">shapely</span><span class="tag">PostGIS</span>
+      <span class="tag">REST / GeoJSON</span><span class="tag">React</span><span class="tag">AWS</span>
+    </div>
+
+    <a class="backlink" href="lab.html">← back to the Lab</a>
+  </main>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="lab-alloc.html">← Prev: allocations</a>
+      <a href="gis.html">The full platform →</a>
+      <a href="mailto:tijiljha8@gmail.com">Email</a>
+    </div>
+    <p class="fine">write-up · kept general on purpose</p>
+  </div>
+</footer>
+
+<script src="toc.js"></script>
+</body>
+</html>
