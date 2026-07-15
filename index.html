@@ -123,10 +123,26 @@
       <a href="mailto:tijiljha8@gmail.com">Email</a>
       <a href="https://github.com/tijiljha" target="_blank" rel="noopener">GitHub</a>
       <a href="https://www.linkedin.com/in/tijil-jha-8844722a5" target="_blank" rel="noopener">LinkedIn</a>
+      <span class="greet">Happy <span id="weekday">Day</span><span class="wink" aria-hidden="true"><i></i><i class="r"></i></span></span>
     </div>
     <p class="fine">Bangalore · built from scratch, like everything else here</p>
   </div>
 </footer>
+
+<style>
+  .greet{font-family:var(--mono);font-size:16px;color:var(--accent);font-weight:550;
+         margin-left:auto;display:inline-flex;align-items:center;gap:9px}
+  .wink{display:inline-flex;align-items:center;gap:5px;padding-bottom:2px}
+  .wink i{width:6px;height:6px;border-radius:50%;background:var(--accent);
+          display:inline-block;transform-origin:center}
+  .wink i.r{animation:wink 3.4s ease-in-out infinite}
+  @keyframes wink{0%,86%,100%{transform:scaleY(1)}90%,95%{transform:scaleY(.14)}}
+  @media (prefers-reduced-motion:reduce){.wink i.r{animation:none}}
+</style>
+<script>
+  document.getElementById('weekday').textContent =
+    new Date().toLocaleDateString('en-US', { weekday: 'long' });
+</script>
 
 </body>
 </html>
