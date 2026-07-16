@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://rsms.me/">
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 <link rel="stylesheet" href="theme.css">
+<script src="theme.js"></script>
 </head>
 <body>
 
@@ -17,9 +18,11 @@
       <a class="brand" href="index.html">Tijil&nbsp;Jha</a>
       <nav class="main">
         <a href="index.html" aria-current="page">Home</a>
+        <a href="about.html">About</a>
         <a href="projects.html">Projects</a>
         <a href="lab.html">Lab</a>
         <a href="mailto:tijiljha8@gmail.com">Contact</a>
+        <button class="pullbulb" onclick="pullBulb(this)" aria-label="Toggle the lights" title="Pull the cord"><span class="pb-wire"></span><span class="pb-bulb">💡</span><span class="pb-cord"></span><span class="pb-knob"></span></button>
       </nav>
     </div>
   </div>
@@ -27,15 +30,16 @@
 
 <section>
   <div class="wrap">
-    <h1>I'm Tijil Jha. I build software — and I make the building of it something you can <span class="light">play</span> and <span class="light">read</span>.</h1>
+    <h1>Hey, I'm Tijil. This is my <span class="light">workshop on the internet</span>.</h1>
     <p class="lead">
-      Most of what I make ends up as something you can open: a game you play in the browser,
-      a tool that drafts your emails, notebooks where I work through hard systems problems out loud.
+      Everything here is something I made — shipped products, games you can play in the browser,
+      half-finished experiments, and notes written while figuring hard things out. I keep the
+      garage door open while I work: the wins, the works-in-progress, and whatever I'm
+      curious about this week all live here.
     </p>
 
     <div class="nowcard">
       <div class="item"><span class="k">where</span> <span><b>Bangalore, India</b></span></div>
-      <div class="item"><span class="k">now</span> <span><b>Software engineer</b></span></div>
     </div>
   </div>
 </section>
@@ -81,12 +85,11 @@
 
 <section>
   <div class="wrap">
-    <h2 class="sec">Currently in the Lab</h2>
+    <h2 class="sec">Ideas I'm chasing these days</h2>
     <p>
       Alongside shipping, I keep a notebook of harder problems I'm working through — the kind of
-      thing game and systems teams live in. Memory layout, allocation-free frames, cache-friendly
-      state machines, geospatial data at scale. Each one is a problem I understand, the way I'd
-      approach it, and the trade-offs that decide whether it works.
+      thing game and systems teams live in. These are the ones on my desk right now; each links
+      to the full write-up in the Lab.
     </p>
     <ul class="rows">
       <li>
@@ -123,6 +126,7 @@
       <a href="mailto:tijiljha8@gmail.com">Email</a>
       <a href="https://github.com/tijiljha" target="_blank" rel="noopener">GitHub</a>
       <a href="https://www.linkedin.com/in/tijil-jha-8844722a5" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://x.com/TijilJha283574" target="_blank" rel="noopener">X&nbsp;/&nbsp;Twitter</a>
       <span class="greet">Happy <span id="weekday">Day</span><span class="wink" aria-hidden="true"><i></i><i class="r"></i></span></span>
     </div>
     <p class="fine">Bangalore · built from scratch, like everything else here</p>
